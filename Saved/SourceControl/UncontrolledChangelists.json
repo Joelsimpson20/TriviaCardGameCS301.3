@@ -1,0 +1,22 @@
+{
+	"version": 1,
+	"changelists": [
+		{
+			"guid": "00000000000000000000000000000000",
+			"description": "Default Uncontrolled Changelist",
+			"files": [
+				"D:/Users/270112350/OneDrive - UP Education/Documents/TriviaCardGameCS301.3/Content/StarterContent/HDRI/HDRI_Epic_Courtyard_Daylight.uasset",
+				"D:/Users/270112350/OneDrive - UP Education/Documents/TriviaCardGameCS301.3/Content/StarterContent/Architecture/Floor_400x400.uasset",
+				"D:/Users/270112350/OneDrive - UP Education/Documents/TriviaCardGameCS301.3/Content/UI/WBP_TriviaUI.uasset",
+				"D:/Users/270112350/OneDrive - UP Education/Documents/TriviaCardGameCS301.3/Content/Blueprints/BP_TriviaPlayerController.uasset",
+				"D:/Users/270112350/OneDrive - UP Education/Documents/TriviaCardGameCS301.3/Content/Assets/4d4f36ff-6111-410c-b74e-4630b01a16f7_Brush.uasset",
+				"D:/Users/270112350/OneDrive - UP Education/Documents/TriviaCardGameCS301.3/Content/Systems/BP_FirebaseManager.uasset",
+				"D:/Users/270112350/OneDrive - UP Education/Documents/TriviaCardGameCS301.3/Content/Assets/4d4f36ff-6111-410c-b74e-4630b01a16f7.uasset",
+				"D:/Users/270112350/OneDrive - UP Education/Documents/TriviaCardGameCS301.3/Content/UI/WBP_MainMenu.uasset",
+				"D:/Users/270112350/OneDrive - UP Education/Documents/TriviaCardGameCS301.3/Content/Fonts/FredokaOne-Regular.uasset",
+				"D:/Users/270112350/OneDrive - UP Education/Documents/TriviaCardGameCS301.3/Content/Fonts/FredokaOne-Regular_Font.uasset",
+				"D:/Users/270112350/OneDrive - UP Education/Documents/TriviaCardGameCS301.3/Content/UI/WBP_Solo.uasset"
+			]
+		}
+	]
+}

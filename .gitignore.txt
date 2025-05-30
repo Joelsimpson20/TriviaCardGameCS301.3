@@ -1,0 +1,22 @@
+# Visual Studio files
+.vs/
+*.db
+*.sdf
+
+# Build files
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+
+# Compiled files
+*.pdb
+*.obj
+*.pch
+
+# Unreal-specific ignores
+*.log
+*.aps
+*.suo
+*.sln
+*.VC.db
