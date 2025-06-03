@@ -4,7 +4,7 @@
 #include "Engine/GameInstance.h"
 #include "EOSGameInstance.generated.h"
 
-UCLASS()
+UCLASS(Blueprintable)
 class CS301_TRIVIACARDGAME_API UEOSGameInstance : public UGameInstance
 {
     GENERATED_BODY()
@@ -14,4 +14,8 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "EOS")
     void LoginWithEOS();
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "EOS")
+    void OnSessionCreatedSuccess();
 };
+

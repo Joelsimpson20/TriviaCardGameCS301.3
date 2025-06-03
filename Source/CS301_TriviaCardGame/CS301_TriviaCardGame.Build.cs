@@ -7,11 +7,19 @@ public class CS301_TriviaCardGame : ModuleRules
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicDependencyModuleNames.AddRange(new string[] {
-            "Core", "CoreUObject", "Engine", "InputCore", "OnlineSubsystem", "OnlineSubsystemUtils"
+            "Core",
+            "CoreUObject",
+            "Engine",
+            "InputCore",
+            "OnlineSubsystem",
+            "OnlineSubsystemUtils"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] {
             "OnlineSubsystemEOS"
         });
+
+        // Optional: Enable logging for EOS
+        bEnableExceptions = true;
     }
 }
