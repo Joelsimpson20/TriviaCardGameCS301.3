@@ -1,12 +1,25 @@
+# --- Visual Studio ---
 .vs/
-*.db
+.vsconfig
+*.VC.db
 *.sdf
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
 
-Binaries/
-Intermediate/
-Saved/
-DerivedDataCache/
-
+# --- Compiled files ---
 *.pdb
 *.obj
 *.pch
+
+# --- Build folders ---
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+ShaderDebugInfo/
+
+# --- Unreal-specific temp files ---
+*.log
+*.tmp
