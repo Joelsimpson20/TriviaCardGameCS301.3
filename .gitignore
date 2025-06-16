@@ -1,0 +1,12 @@
+.vs/
+*.db
+*.sdf
+
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+
+*.pdb
+*.obj
+*.pch
