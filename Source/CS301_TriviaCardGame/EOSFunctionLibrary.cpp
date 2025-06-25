@@ -1,142 +1,220 @@
-#include "EOSFunctionLibrary.h"
+﻿#include "EOSFunctionLibrary.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "OnlineSessionSettings.h"
-#include "Interfaces/OnlineIdentityInterface.h"
+#include "Interfaces/OnlineIdentityInterface.h"          
+#include "OnlineSubsystemUtils.h"                        
+#include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
-#include "Engine/Engine.h"
 
-static TSharedPtr<FOnlineSessionSearch> CachedSearchSettings;
+#define SEARCH_KEYWORDS 0x0002 
 
-void UEOSFunctionLibrary::LoginToEOS()
+TSharedPtr<FOnlineSessionSearch> UEOSFunctionLibrary::CachedSessionSearch;
+
+void UEOSFunctionLibrary::LoginToEOS(const FString& LoginType, FOnEOSLoginComplete OnComplete)
 {
     IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
-    if (!Subsystem)
-    {
-        UE_LOG(LogTemp, Error, TEXT("EOS: OnlineSubsystem not found"));
-        return;
-    }
+    if (!Subsystem) { OnComplete.ExecuteIfBound(false); return; }
 
     IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
-    if (!Identity.IsValid())
-    {
-        UE_LOG(LogTemp, Error, TEXT("EOS: Identity Interface not valid"));
-        return;
-    }
+    if (!Identity.IsValid()) { OnComplete.ExecuteIfBound(false); return; }
 
     FOnlineAccountCredentials Credentials;
-    Credentials.Type = "AccountPortal";
-    Credentials.Id = TEXT("");
-    Credentials.Token = TEXT("");
+    Credentials.Type = LoginType;
+    Credentials.Id = FString();
+    Credentials.Token = FString();
 
-    Identity->OnLoginCompleteDelegates->AddLambda([](int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
+    Identity->OnLoginCompleteDelegates->AddLambda([OnComplete](int32, bool bWasSuccessful, const FUniqueNetId& UserId, const FString&)
         {
-            if (bWasSuccessful)
-            {
-                UE_LOG(LogTemp, Log, TEXT("EOS Login Successful! UserId: %s"), *UserId.ToString());
-            }
-            else
-            {
-                UE_LOG(LogTemp, Error, TEXT("EOS Login Failed: %s"), *Error);
-            }
+            UE_LOG(LogTemp, Log, TEXT("EOS: Login %s"), bWasSuccessful ? TEXT("successful") : TEXT("failed"));
+            OnComplete.ExecuteIfBound(bWasSuccessful);
         });
 
     Identity->Login(0, Credentials);
 }
 
-void UEOSFunctionLibrary::CreateSession(int32 MaxPlayers, FOnCreateSessionResult OnComplete)
+FString UEOSFunctionLibrary::GetEOSAccountName()
 {
     IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
-    if (!Subsystem) return;
+    if (!Subsystem) return "No Subsystem";
 
-    IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
-    if (!SessionInterface.IsValid()) return;
+    IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
+    if (!Identity.IsValid()) return "No Identity";
 
-    FOnlineSessionSettings SessionSettings;
-    SessionSettings.bIsLANMatch = false;
-    SessionSettings.NumPublicConnections = MaxPlayers;
-    SessionSettings.bShouldAdvertise = true;
-    SessionSettings.bUsesPresence = true;
-    SessionSettings.bAllowJoinInProgress = true;
-    SessionSettings.bAllowJoinViaPresence = true;
+    TSharedPtr<const FUniqueNetId> UserId = Identity->GetUniquePlayerId(0);
+    if (!UserId.IsValid()) return "No User ID";
 
-    SessionInterface->OnCreateSessionCompleteDelegates.AddLambda([OnComplete](FName SessionName, bool bWasSuccessful)
+    return Identity->GetPlayerNickname(*UserId);
+}
+
+void UEOSFunctionLibrary::CreateSession(int32 MaxPlayers, FOnEOSCreateSessionComplete OnComplete)
+{
+    IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+    if (!Subsystem) { OnComplete.ExecuteIfBound(false); return; }
+
+    IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+    if (!Session.IsValid()) { OnComplete.ExecuteIfBound(false); return; }
+
+    FOnlineSessionSettings Settings;
+    Settings.NumPublicConnections = MaxPlayers;
+    Settings.bIsLANMatch = false;
+    Settings.bShouldAdvertise = true;
+    Settings.bUsesPresence = true;
+    Settings.bAllowJoinViaPresence = true;
+    Settings.bAllowJoinInProgress = true;
+
+    Session->OnCreateSessionCompleteDelegates.AddLambda([OnComplete](FName, bool bWasSuccessful)
         {
             if (bWasSuccessful)
             {
                 UE_LOG(LogTemp, Log, TEXT("EOS: Session created successfully."));
-                UGameplayStatics::OpenLevel(GWorld, "TriviaCardfGameBaseLevel", true, "listen");
+                UGameplayStatics::OpenLevel(GWorld, "LobbyMap", true, "listen");
             }
             else
             {
                 UE_LOG(LogTemp, Error, TEXT("EOS: Failed to create session."));
             }
-
             OnComplete.ExecuteIfBound(bWasSuccessful);
         });
 
-    SessionInterface->CreateSession(0, NAME_GameSession, SessionSettings);
+    TSharedPtr<const FUniqueNetId> UserId = Subsystem->GetIdentityInterface()->GetUniquePlayerId(0);
+    Session->CreateSession(*UserId, NAME_GameSession, Settings);
 }
 
-void UEOSFunctionLibrary::FindSessions(APlayerController* PlayerController, int32 MaxResults, bool bIsLAN, bool bUsePresence)
+void UEOSFunctionLibrary::FindSessions(int32 MaxResults)
 {
     IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
     if (!Subsystem) return;
 
-    IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
-    if (!SessionInterface.IsValid()) return;
+    IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+    if (!Session.IsValid()) return;
 
-    CachedSearchSettings = MakeShareable(new FOnlineSessionSearch());
-    CachedSearchSettings->MaxSearchResults = MaxResults;
-    CachedSearchSettings->bIsLanQuery = bIsLAN;
-    CachedSearchSettings->QuerySettings.Set(FName("presence"), bUsePresence, EOnlineComparisonOp::Equals);
+    CachedSessionSearch = MakeShareable(new FOnlineSessionSearch());
+    CachedSessionSearch->QuerySettings.Set(FName("SEARCH_KEYWORDS"), FString("TriviaSession"), EOnlineComparisonOp::Equals);
 
-    SessionInterface->OnFindSessionsCompleteDelegates.AddLambda([](bool bWasSuccessful)
+    Session->OnFindSessionsCompleteDelegates.AddLambda([](bool bWasSuccessful)
         {
-            if (!bWasSuccessful || !CachedSearchSettings.IsValid() || CachedSearchSettings->SearchResults.Num() == 0)
+            if (bWasSuccessful && CachedSessionSearch->SearchResults.Num() > 0)
+            {
+                UE_LOG(LogTemp, Log, TEXT("EOS: %d session(s) found."), CachedSessionSearch->SearchResults.Num());
+            }
+            else
             {
                 UE_LOG(LogTemp, Warning, TEXT("EOS: No sessions found."));
-                return;
             }
-
-            UE_LOG(LogTemp, Log, TEXT("EOS: Found %d session(s)."), CachedSearchSettings->SearchResults.Num());
         });
 
-    SessionInterface->FindSessions(0, CachedSearchSettings.ToSharedRef());
+    TSharedPtr<const FUniqueNetId> UserId = Subsystem->GetIdentityInterface()->GetUniquePlayerId(0);
+    Session->FindSessions(*UserId, CachedSessionSearch.ToSharedRef());
 }
 
-void UEOSFunctionLibrary::JoinFirstAvailableSession()
+TArray<FEOSBlueprintSessionResult> UEOSFunctionLibrary::GetSessionResults()
+{
+    TArray<FEOSBlueprintSessionResult> Out;
+
+    if (!CachedSessionSearch.IsValid()) return Out;
+
+    for (int32 i = 0; i < CachedSessionSearch->SearchResults.Num(); i++)
+    {
+        const auto& Result = CachedSessionSearch->SearchResults[i];
+        FEOSBlueprintSessionResult Entry;
+        Entry.OwningUserName = Result.Session.OwningUserName;
+        Entry.Ping = Result.PingInMs;
+        Entry.InternalIndex = i;
+        Out.Add(Entry);
+    }
+
+    return Out;
+}
+
+void UEOSFunctionLibrary::JoinSession(int32 SessionIndex, FOnEOSJoinSessionComplete OnComplete)
 {
     IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
-    if (!Subsystem || !CachedSearchSettings.IsValid()) return;
+    if (!Subsystem || !CachedSessionSearch.IsValid()) { OnComplete.ExecuteIfBound(false); return; }
 
-    IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
-    if (!SessionInterface.IsValid()) return;
+    IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+    if (!Session.IsValid()) { OnComplete.ExecuteIfBound(false); return; }
 
-    if (CachedSearchSettings->SearchResults.Num() == 0)
+    if (!CachedSessionSearch->SearchResults.IsValidIndex(SessionIndex))
     {
-        UE_LOG(LogTemp, Warning, TEXT("JoinFirstAvailableSession: No session results available"));
+        UE_LOG(LogTemp, Warning, TEXT("EOS: Invalid session index %d"), SessionIndex);
+        OnComplete.ExecuteIfBound(false);
         return;
     }
 
-    SessionInterface->OnJoinSessionCompleteDelegates.AddLambda([](FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+    Session->OnJoinSessionCompleteDelegates.AddLambda([OnComplete](FName SessionName, EOnJoinSessionCompleteResult::Type Result)
         {
-            FString ConnectString;
-            IOnlineSessionPtr SessionInterface = IOnlineSubsystem::Get()->GetSessionInterface();
-            if (SessionInterface.IsValid() && SessionInterface->GetResolvedConnectString(SessionName, ConnectString))
+            bool bSuccess = Result == EOnJoinSessionCompleteResult::Success;
+            if (bSuccess)
             {
+                FString ConnectInfo;
+                IOnlineSubsystem::Get()->GetSessionInterface()->GetResolvedConnectString(SessionName, ConnectInfo);
                 APlayerController* PC = UGameplayStatics::GetPlayerController(GWorld, 0);
                 if (PC)
                 {
-                    UE_LOG(LogTemp, Log, TEXT("EOS: Joining session at %s"), *ConnectString);
-                    PC->ClientTravel(ConnectString, ETravelType::TRAVEL_Absolute);
+                    PC->ClientTravel(ConnectInfo, ETravelType::TRAVEL_Absolute);
+                    UE_LOG(LogTemp, Log, TEXT("EOS: Joining session..."));
                 }
             }
             else
             {
-                UE_LOG(LogTemp, Error, TEXT("EOS: Failed to resolve connect string."));
+                UE_LOG(LogTemp, Error, TEXT("EOS: Failed to join session."));
+            }
+            OnComplete.ExecuteIfBound(bSuccess);
+        });
+
+    TSharedPtr<const FUniqueNetId> UserId = Subsystem->GetIdentityInterface()->GetUniquePlayerId(0);
+    Session->JoinSession(*UserId, NAME_GameSession, CachedSessionSearch->SearchResults[SessionIndex]);
+}
+
+void UEOSFunctionLibrary::JoinFirstAvailableSession(FOnEOSJoinFirstSessionComplete OnComplete)
+{
+    IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+    if (!Subsystem) { OnComplete.ExecuteIfBound(false); return; }
+
+    IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+    if (!Session.IsValid()) { OnComplete.ExecuteIfBound(false); return; }
+
+    CachedSessionSearch = MakeShareable(new FOnlineSessionSearch());
+    CachedSessionSearch->bIsLanQuery = false;
+    CachedSessionSearch->MaxSearchResults = 10;
+    CachedSessionSearch->QuerySettings.Set(FName("SEARCH_KEYWORDS"), FString("TriviaSession"), EOnlineComparisonOp::Equals);
+
+    Session->OnFindSessionsCompleteDelegates.AddLambda(
+        [Session, OnComplete](bool bWasSuccessful)
+        {
+            if (bWasSuccessful && CachedSessionSearch->SearchResults.Num() > 0)
+            {
+                Session->OnJoinSessionCompleteDelegates.AddLambda(
+                    [OnComplete](FName, EOnJoinSessionCompleteResult::Type Result)
+                    {
+                        const bool bJoinSuccess = Result == EOnJoinSessionCompleteResult::Success;
+                        UE_LOG(LogTemp, Log, TEXT("EOS: Join first session %s"), bJoinSuccess ? TEXT("Success") : TEXT("Fail"));
+                        OnComplete.ExecuteIfBound(bJoinSuccess);
+                    });
+
+                Session->JoinSession(0, NAME_GameSession, CachedSessionSearch->SearchResults[0]);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("EOS: No available sessions to join."));
+                OnComplete.ExecuteIfBound(false);
             }
         });
 
-    SessionInterface->JoinSession(0, NAME_GameSession, CachedSearchSettings->SearchResults[0]);
+    TSharedPtr<const FUniqueNetId> UserId = Subsystem->GetIdentityInterface()->GetUniquePlayerId(0);
+    Session->FindSessions(*UserId, CachedSessionSearch.ToSharedRef());
 }
+
+void UEOSFunctionLibrary::DestroySession()
+{
+    IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+    if (!Subsystem) return;
+
+    IOnlineSessionPtr Sessions = Subsystem->GetSessionInterface();
+    if (!Sessions.IsValid()) return;
+
+    Sessions->DestroySession(NAME_GameSession);
+}
+
+

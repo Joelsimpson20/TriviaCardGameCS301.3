@@ -1,12 +1,29 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "OnlineSubsystemTypes.h"
+#include "Interfaces/OnlineSessionInterface.h"
+#include "OnlineSessionSettings.h"
 #include "EOSFunctionLibrary.generated.h"
 
-// Delegate to notify blueprint of CreateSession result
-DECLARE_DYNAMIC_DELEGATE_OneParam(FOnCreateSessionResult, bool, bWasSuccessful);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnEOSLoginComplete, bool, bWasSuccessful);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnEOSCreateSessionComplete, bool, bWasSuccessful);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnEOSJoinSessionComplete, bool, bWasSuccessful);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnEOSJoinFirstSessionComplete, bool, bWasSuccessful);
+
+USTRUCT(BlueprintType)
+struct FEOSBlueprintSessionResult
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly)
+    FString OwningUserName;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 Ping;
+
+    int32 InternalIndex;
+};
 
 UCLASS()
 class CS301_TRIVIACARDGAME_API UEOSFunctionLibrary : public UBlueprintFunctionLibrary
@@ -14,19 +31,36 @@ class CS301_TRIVIACARDGAME_API UEOSFunctionLibrary : public UBlueprintFunctionLi
     GENERATED_BODY()
 
 public:
-    /** Logs in to EOS using AccountPortal login */
+
+    // LOGIN 
     UFUNCTION(BlueprintCallable, Category = "EOS")
-    static void LoginToEOS();
+    static void LoginToEOS(const FString& LoginType, FOnEOSLoginComplete OnComplete);
 
-    /** Creates an EOS session */
-    UFUNCTION(BlueprintCallable, Category = "EOS|Sessions")
-    static void CreateSession(int32 MaxPlayers, FOnCreateSessionResult OnComplete);
+    UFUNCTION(BlueprintPure, Category = "EOS")
+    static FString GetEOSAccountName();
 
-    /** Searches for available EOS sessions */
-    UFUNCTION(BlueprintCallable, Category = "EOS|Sessions")
-    static void FindSessions(APlayerController* PlayerController, int32 MaxResults, bool bIsLAN, bool bUsePresence);
+    // SESSION CREATION
+    UFUNCTION(BlueprintCallable, Category = "EOS")
+    static void CreateSession(int32 MaxPlayers, FOnEOSCreateSessionComplete OnComplete);
 
-    /** Attempts to join the first available session found by FindSessions */
-    UFUNCTION(BlueprintCallable, Category = "EOS|Sessions")
-    static void JoinFirstAvailableSession();
+    // SESSION SEARCH 
+    UFUNCTION(BlueprintCallable, Category = "EOS")
+    static void FindSessions(int32 MaxResults);
+
+    UFUNCTION(BlueprintCallable, Category = "EOS")
+    static TArray<FEOSBlueprintSessionResult> GetSessionResults();
+
+    // JOINING
+    UFUNCTION(BlueprintCallable, Category = "EOS")
+    static void JoinSession(int32 SessionIndex, FOnEOSJoinSessionComplete OnComplete);
+
+    UFUNCTION(BlueprintCallable, Category = "EOS")
+    static void JoinFirstAvailableSession(FOnEOSJoinFirstSessionComplete OnComplete);
+
+	// DESTROY SESSION
+    UFUNCTION(BlueprintCallable, Category = "EOS")
+    static void DestroySession();
+
+private:
+    static TSharedPtr<FOnlineSessionSearch> CachedSessionSearch;
 };

@@ -1,4 +1,4 @@
-using UnrealBuildTool;
+﻿using UnrealBuildTool;
 
 public class CS301_TriviaCardGame : ModuleRules
 {
@@ -7,19 +7,21 @@ public class CS301_TriviaCardGame : ModuleRules
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicDependencyModuleNames.AddRange(new string[] {
-            "Core",
-            "CoreUObject",
-            "Engine",
-            "InputCore",
-            "OnlineSubsystem",
-            "OnlineSubsystemUtils"
-        });
+    "Core",
+    "CoreUObject",
+    "Engine",
+    "InputCore",
+    "OnlineSubsystem",
+    "OnlineSubsystemUtils",
+    "Networking",
+    "Sockets"
+});
 
-        PrivateDependencyModuleNames.AddRange(new string[] {
+
+        DynamicallyLoadedModuleNames.AddRange(new string[] {
             "OnlineSubsystemEOS"
         });
 
-        // Optional: Enable logging for EOS
         bEnableExceptions = true;
     }
 }
