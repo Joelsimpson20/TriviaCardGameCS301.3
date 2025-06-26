@@ -1941,3 +1941,6 @@ Make sure 'BP_FirebaseManager' has been compiled for  Execute Process Request
 [2025.06.26-00.00.45:538][458]LogAssetRegistry: Error: Package is unloadable: C:/Users/270137506/OneDrive - UP Education/Documents/New folder (2)/TriviaCardGameCS301.3/Content/Blueprints/BP_FirebaseManager.uasset. Reason: Invalid value for PACKAGE_FILE_TAG at start of file.
 [2025.06.26-00.00.45:538][458]LogAssetRegistry: Error: Package is unloadable: C:/Users/270137506/OneDrive - UP Education/Documents/New folder (2)/TriviaCardGameCS301.3/Content/Blueprints/BP_FirebaseManager.uasset. Reason: Invalid value for PACKAGE_FILE_TAG at start of file.
 [2025.06.26-00.00.52:887][480]LogAssetRegistry: Error: Package is unloadable: C:/Users/270137506/OneDrive - UP Education/Documents/New folder (2)/TriviaCardGameCS301.3/Content/Systems/BP_FirebaseManager-Heimdall-XPS15-II.uasset. Reason: Invalid value for PACKAGE_FILE_TAG at start of file.
+[2025.06.26-00.02.18:735][749]LogEOSSDK: LogEOS: Updating Product SDK Config, Time: 388.029663
+[2025.06.26-00.02.19:736][752]LogEOSSDK: LogEOS: SDK Config Product Update Request Completed - No Change
+[2025.06.26-00.02.19:736][752]LogEOSSDK: LogEOS: ScheduleNextSDKConfigDataUpdate - Time: 388.696045, Update Interval: 315.923340
