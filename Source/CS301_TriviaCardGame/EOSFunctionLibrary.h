@@ -32,32 +32,32 @@ class CS301_TRIVIACARDGAME_API UEOSFunctionLibrary : public UBlueprintFunctionLi
 
 public:
 
-    // LOGIN 
+    // Login 
     UFUNCTION(BlueprintCallable, Category = "EOS")
     static void LoginToEOS(const FString& LoginType, FOnEOSLoginComplete OnComplete);
 
     UFUNCTION(BlueprintPure, Category = "EOS")
     static FString GetEOSAccountName();
 
-    // SESSION CREATION
+    // Session Creation
     UFUNCTION(BlueprintCallable, Category = "EOS")
     static void CreateSession(int32 MaxPlayers, FOnEOSCreateSessionComplete OnComplete);
 
-    // SESSION SEARCH 
+	// Session Search
     UFUNCTION(BlueprintCallable, Category = "EOS")
     static void FindSessions(int32 MaxResults);
 
     UFUNCTION(BlueprintCallable, Category = "EOS")
     static TArray<FEOSBlueprintSessionResult> GetSessionResults();
 
-    // JOINING
+	// JOoining Session
     UFUNCTION(BlueprintCallable, Category = "EOS")
     static void JoinSession(int32 SessionIndex, FOnEOSJoinSessionComplete OnComplete);
 
     UFUNCTION(BlueprintCallable, Category = "EOS")
     static void JoinFirstAvailableSession(FOnEOSJoinFirstSessionComplete OnComplete);
 
-	// DESTROY SESSION
+	// Destroy Session
     UFUNCTION(BlueprintCallable, Category = "EOS")
     static void DestroySession();
 
