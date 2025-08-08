@@ -23,23 +23,23 @@
 		},
 		{
 			"Name": "VaRest",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "OnlineServicesEOSGS",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "OnlineSubsystemEOS",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "OnlineServicesEOS",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "EasyOSS",
-			"Enabled": true
+			"Enabled": false
 		}
 	]
 }
